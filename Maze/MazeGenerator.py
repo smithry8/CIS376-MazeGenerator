@@ -1,3 +1,4 @@
+#Created by Ryan and Ian O'Strander
 import pygame, sys
 from Player import Player
 import random
@@ -11,15 +12,15 @@ FRAME_RATE = 60
 clock = pygame.time.Clock()
 playerRadius = tileSize/2
 player = Player(playerRadius, playerRadius)
+# The game Engine
 class Engine:
     def __init__(self):
         pygame.init()
-        pygame.display.set_caption('Hello World')
+        pygame.display.set_caption('Ryan and Ian Maze Generator / Solver')
         self._running = False
         self._screen = DISPLAYSURF
     def loop(self):
         self._running = True
-
         while self._running:
             events = pygame.event.get()
             for event in events:
@@ -27,6 +28,7 @@ class Engine:
                     self.running = False
                     pygame.quit()
                     sys.exit()
+                #Handle the Movement of the player
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
                         player.x += tileSize
@@ -40,12 +42,16 @@ class Engine:
                     elif event.key == pygame.K_DOWN or event.key == pygame.K_s:
                         player.y += tileSize
                         player.position = (player.x,player.y)
+            #calls one cycle every frame
             simCycle()
             render(self)
+            #limits frame rate to the FRAME_RATE constant
             clock.tick(FRAME_RATE)
+
+# Draws the board with either an X or W
+# X is for dead cells
+# W is for live cells
 def initializeGame():
-    pygame.draw.circle(DISPLAYSURF, (0, 0, 255), (playerRadius, playerRadius), playerRadius)
-    drawLines()
     for i in range(gridSize):
         for j in range(gridSize):
             grid[i][j] = "X"
@@ -89,7 +95,7 @@ def simCycle():
             elif grid[i][j] == "B":
                 grid[i][j] = "W"
 
-
+# checks all neightbors of a cell and returns the number of neighbors
 def checkNeighbors(row,col):
     neighbors = 0;
     for r in [row, row + 1, row - 1]:
