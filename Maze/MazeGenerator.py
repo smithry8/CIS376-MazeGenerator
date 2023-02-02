@@ -1,23 +1,153 @@
+# Created by Ryan and Ian O'Strander
 import pygame, sys
+import Player
+import Wall
+import random
+import copy
 from pygame.locals import *
-pygame.init()
-DISPLAYSURF = pygame.display.set_mode((600,600))
-pygame.display.set_caption('Hello World')
-pygame.draw.circle(DISPLAYSURF, (255, 255, 255), (15,15), 15)
 
-grid = 20
-gridWidth = DISPLAYSURF.get_width() / grid
-gridHeight = DISPLAYSURF.get_height() / grid
+DISPLAYSURF = pygame.display.set_mode((600, 600))
+gridSize = 20
+tileSize = DISPLAYSURF.get_width() / gridSize
+grid = [[0] * gridSize for i in range(gridSize)]
+FRAME_RATE = 60
+clock = pygame.time.Clock()
+playerRadius = tileSize/2
+player = Player.Player(playerRadius, playerRadius)
+walls = []
+stable = False
 
-for i in range(grid):
-    pygame.draw.line(DISPLAYSURF, (255,255,255), (i*gridWidth, 0), (i*gridWidth, DISPLAYSURF.get_height()))
+# The game Engine
+class Engine:
+    def __init__(self):
+        pygame.init()
+        pygame.display.set_caption('Ryan and Ian Maze Generator / Solver')
+        self._running = False
+        self._screen = DISPLAYSURF
+    def loop(self):
+        self._running = True
+        while self._running:
+            events = pygame.event.get()
+            for event in events:
+                if event.type == pygame.QUIT:
+                    self.running = False
+                    pygame.quit()
+                    sys.exit()
+                #Handle the Movement of the player
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+                        if not collisionDetector(player.x + tileSize, player.y):
+                            player.x += tileSize
+                            player.position = (player.x,player.y)
+                    elif event.key == pygame.K_LEFT or event.key == pygame.K_a:
+                        if not collisionDetector(player.x - tileSize, player.y):
+                            player.x -= tileSize
+                            player.position = (player.x,player.y)
+                    elif event.key == pygame.K_UP or event.key == pygame.K_w:
+                        if not collisionDetector(player.x, player.y - tileSize):
+                            player.y -= tileSize
+                            player.position = (player.x,player.y)
+                    elif event.key == pygame.K_DOWN or event.key == pygame.K_s:
+                        if not collisionDetector(player.x, player.y + tileSize):
+                            player.y += tileSize
+                            player.position = (player.x,player.y)
+            #calls one cycle every frame
+            if(not stable):
+                simCycle()
+            render(self)
+            #limits frame rate to the FRAME_RATE constant
+            clock.tick(FRAME_RATE)
 
-for j in range(grid):
-    pygame.draw.line(DISPLAYSURF, (255,255,255), (0, j*gridHeight), (DISPLAYSURF.get_width(), j*gridHeight))
+# Fills the board with either an X or W
+# X is for dead cells
+# W is for live cells
+def initializeGame():
+    # Initialize Maze with all Empty Spaces
+    for i in range(gridSize):
+        for j in range(gridSize):
+            grid[i][j] = "X"
+            print(grid[i][j], end=" ")
+        print("\n")
+    # Place initial Points on Maze
+    for i in range(gridSize * 2):
+        x = random.randint(0, gridSize - 1)
+        y = random.randint(0, gridSize - 1)
+        grid[x][y] = "W"
+# Draw visible game objects
+def render(self):
+    self._screen.fill((1, 1, 1))
+    drawWalls()
+    drawLines()
+    drawPlayer(player)
+    pygame.display.flip()
+# Draws a grid on the Maze
+def drawLines():
+    for i in range(gridSize):
+        pygame.draw.line(DISPLAYSURF, (255, 255, 255), (i * tileSize, 0), (i * tileSize, DISPLAYSURF.get_height()))
+    for j in range(gridSize):
+        pygame.draw.line(DISPLAYSURF, (255, 255, 255), (0, j * tileSize), (DISPLAYSURF.get_width(), j * tileSize))
+# Draws the Walls on the Maze
+def drawWalls():
+    for i in range(gridSize):
+        for j in range(gridSize):
+            if(grid[i][j] == "W"):
+                pygame.draw.rect(DISPLAYSURF, (255, 0, 0), (i * tileSize, j * tileSize, tileSize, tileSize))
+# detects if a point collides with a Wall
+def collisionDetector(x,y):
+    for w in walls:
+        if w.x < x < (w.x + tileSize) and y > w.y and y < (w.y + tileSize):
+            return True
+    return False
 
-while 1:
-    for event in pygame.event.get():
-        if event.type == QUIT:
-            pygame.quit()
-            sys.exit()
-    pygame.display.update()
+# one cycle of the simulation
+def simCycle():
+    print("CYCLE")
+    global grid
+    global stable
+    updated = False
+    gridCopy = copy.deepcopy(grid)
+    for i in range(gridSize):
+        for j in range(gridSize):
+            neighbors = checkNeighbors(i,j)
+            if grid[i][j] == "W" and (neighbors < 1 or neighbors > 4):
+                gridCopy[i][j] = "X"
+                updated = True
+            if grid[i][j] == "X" and neighbors == 3:
+                gridCopy[i][j] = "W"
+                updated = True
+    grid = gridCopy
+    # Checks to see if the Maze is in a stable state
+    # If it is we want to stop the simCycles and spawn the Wall objects
+    if(not updated):
+        stable = True
+        spawnWalls()
+# Loops through the grid and initializes a Wall object for every "W"
+def spawnWalls():
+    for i in range(gridSize):
+        for j in range(gridSize):
+            if grid[i][j] == "W":
+                x = i * tileSize
+                y = j * tileSize
+                walls.append(Wall.Wall(i*tileSize, j*tileSize, tileSize, tileSize, (x + tileSize / 2, y + tileSize / 2)))
+# checks all neighbors of a cell and returns the number of neighbors
+def checkNeighbors(row,col):
+    neighbors = 0;
+    for r in [row, row + 1, row - 1]:
+        for c in [col, col + 1, col -1]:
+            if not(r < 0 or r >= gridSize or c < 0 or c >= gridSize) and (r,c) != (row,col):
+                if grid[r][c] == "W":
+                    neighbors += 1
+    return neighbors
+
+def drawPlayer(player):
+    pygame.draw.circle(DISPLAYSURF, player.color, player.position, tileSize/2)
+
+
+if __name__ == "__main__":
+    print("name:" + __name__)
+    initializeGame()
+    e = Engine()
+    e.loop()
+
+
+
