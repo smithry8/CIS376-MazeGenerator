@@ -57,6 +57,9 @@ class Engine:
                     # used to check if the player has reached the bottom right tile for win
                     if (player.x >= (gridSize - 1) * tileSize) and (player.y >= (gridSize - 1) * tileSize):
                         winGame()
+
+                    if event.key == pygame.K_q:
+                        quitGame()
             #calls one cycle every frame
             if(not stable):
                 simCycle()
@@ -154,6 +157,11 @@ def winGame():
     pygame.quit()
     sys.exit()
 
+def quitGame():
+    ans = messagebox.askyesno("Quitting", "Are you sure you want to quit")
+    if ans:
+        pygame.quit()
+        sys.exit()
 if __name__ == "__main__":
     print("name:" + __name__)
     initializeGame()
