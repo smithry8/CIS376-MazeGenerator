@@ -5,6 +5,9 @@ import Wall
 import random
 import copy
 from pygame.locals import *
+from tkinter import *
+from tkinter import messagebox
+import tkinter as tk
 
 DISPLAYSURF = pygame.display.set_mode((600, 600))
 gridSize = 20
@@ -51,6 +54,9 @@ class Engine:
                         if not collisionDetector(player.x, player.y + tileSize):
                             player.y += tileSize
                             player.position = (player.x,player.y)
+                    # used to check if the player has reached the bottom right tile for win
+                    if (player.x >= (gridSize - 1) * tileSize) and (player.y >= (gridSize - 1) * tileSize):
+                        winGame()
             #calls one cycle every frame
             if(not stable):
                 simCycle()
@@ -90,7 +96,7 @@ def drawLines():
 def drawWalls():
     for i in range(gridSize):
         for j in range(gridSize):
-            if(grid[i][j] == "W"):
+           if(grid[i][j] == "W"):
                 pygame.draw.rect(DISPLAYSURF, (255, 0, 0), (i * tileSize, j * tileSize, tileSize, tileSize))
 # detects if a point collides with a Wall
 def collisionDetector(x,y):
@@ -142,6 +148,11 @@ def checkNeighbors(row,col):
 def drawPlayer(player):
     pygame.draw.circle(DISPLAYSURF, player.color, player.position, tileSize/2)
 
+#pops up that you won and closes the application
+def winGame():
+    messagebox.showinfo("WINNER", "YOU WIN")
+    pygame.quit()
+    sys.exit()
 
 if __name__ == "__main__":
     print("name:" + __name__)
