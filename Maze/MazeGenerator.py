@@ -19,6 +19,7 @@ playerRadius = tileSize/2
 player = Player.Player(playerRadius, playerRadius)
 walls = []
 stable = False
+rand = random.randrange(256)
 
 # The game Engine
 class Engine:
@@ -39,27 +40,33 @@ class Engine:
                 #Handle the Movement of the player
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
-                        if not collisionDetector(player.x + tileSize, player.y):
+                        if collisionDetector(player.x + tileSize, player.y)[1] == False and player.x + tileSize < DISPLAYSURF.get_width():
                             player.x += tileSize
                             player.position = (player.x,player.y)
                     elif event.key == pygame.K_LEFT or event.key == pygame.K_a:
-                        if not collisionDetector(player.x - tileSize, player.y):
+                        if collisionDetector(player.x - tileSize, player.y)[1] == False and player.x - tileSize >= 0:
                             player.x -= tileSize
                             player.position = (player.x,player.y)
                     elif event.key == pygame.K_UP or event.key == pygame.K_w:
-                        if not collisionDetector(player.x, player.y - tileSize):
+                        if collisionDetector(player.x, player.y - tileSize)[1] == False and player.y - tileSize >= 0:
                             player.y -= tileSize
                             player.position = (player.x,player.y)
                     elif event.key == pygame.K_DOWN or event.key == pygame.K_s:
-                        if not collisionDetector(player.x, player.y + tileSize):
+                        if collisionDetector(player.x, player.y + tileSize)[1] == False and player.y + tileSize < DISPLAYSURF.get_height():
                             player.y += tileSize
                             player.position = (player.x,player.y)
                     # used to check if the player has reached the bottom right tile for win
                     if (player.x >= (gridSize - 1) * tileSize) and (player.y >= (gridSize - 1) * tileSize):
                         winGame()
-
                     if event.key == pygame.K_q:
                         quitGame()
+                if event.type == pygame.MOUSEBUTTONUP:
+                    print("THIS WORKED")
+                    pos = pygame.mouse.get_pos()
+                    result = collisionDetector(pos[0],pos[1])
+                    if result[1] != False:
+                        grid[result[0].row][result[0].col] = "X"
+                        walls.remove(result[0])
             #calls one cycle every frame
             if(not stable):
                 simCycle()
@@ -100,13 +107,13 @@ def drawWalls():
     for i in range(gridSize):
         for j in range(gridSize):
            if(grid[i][j] == "W"):
-                pygame.draw.rect(DISPLAYSURF, (255, 0, 0), (i * tileSize, j * tileSize, tileSize, tileSize))
+                pygame.draw.rect(DISPLAYSURF, (255, 0, rand), (i * tileSize, j * tileSize, tileSize, tileSize))
 # detects if a point collides with a Wall
 def collisionDetector(x,y):
     for w in walls:
         if w.x < x < (w.x + tileSize) and y > w.y and y < (w.y + tileSize):
-            return True
-    return False
+            return [w, True]
+    return [None, False]
 
 # one cycle of the simulation
 def simCycle():
@@ -137,7 +144,7 @@ def spawnWalls():
             if grid[i][j] == "W":
                 x = i * tileSize
                 y = j * tileSize
-                walls.append(Wall.Wall(i*tileSize, j*tileSize, tileSize, tileSize, (x + tileSize / 2, y + tileSize / 2)))
+                walls.append(Wall.Wall(i*tileSize, j*tileSize, tileSize, tileSize, (x + tileSize / 2, y + tileSize / 2), i, j))
 # checks all neighbors of a cell and returns the number of neighbors
 def checkNeighbors(row,col):
     neighbors = 0;
