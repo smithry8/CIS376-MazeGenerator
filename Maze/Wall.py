@@ -14,16 +14,16 @@ class Wall(Updateable.Updateable):
         self.color = color
         self.scene = scene
         self.gridSize = scene.gridSize
-        self.sceneBuffer = scene.sceneBuffer
+        self.gridBuffer = scene.gridBuffer
     # one cycle of the simulation
     def Update(self):
         updated = False
         neighbors = self.checkNeighbors()
         if self.alive and (neighbors < 1 or neighbors > 4):
-            self.alive = False
+            self.scene.gridBuffer[self.row][self.col] = False
             updated = True
         if not self.scene.grid[self.row][self.col].alive and neighbors == 3:
-            self.alive = True
+            self.scene.gridBuffer[self.row][self.col] = True
             updated = True
         # self.scene.grid = gridCopy
         # Checks to see if the Maze is in a stable state
