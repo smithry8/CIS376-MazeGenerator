@@ -2,15 +2,23 @@ import pygame, sys
 import Player
 import Wall
 import random
+# Holds all of the gameobjects
 class Scene:
+    # all gameobjects that are updateable
     updateable = []
     DISPLAYSURF = pygame.display.set_mode((600, 600))
+    # number of tiles per row and column
     gridSize = 20
+    # size of each tile
     tileSize = DISPLAYSURF.get_width() / gridSize
     playerRadius = tileSize / 2
     player = Player.Player(playerRadius * 3, playerRadius * 3)
+    # holds all of the squares
     grid = [[0] * 20 for i in range(20)]
+    # used to prevent conflicting updates
     gridBuffer = [[0] * 20 for i in range(20)]
+    # True if the Maze is not longer updating
+    stable = False
     def __init__(self):
         self.initializeGame()
 
@@ -51,6 +59,6 @@ class Scene:
             for j in range(self.gridSize):
                 color = (0, 0, 0) if not self.grid[i][j].alive else self.grid[i][j].color
                 pygame.draw.rect(self.DISPLAYSURF, color, (i * self.tileSize, j * self.tileSize, self.tileSize, self.tileSize))
-
+    # Draws the player
     def drawPlayer(self,player):
         pygame.draw.circle(self.DISPLAYSURF, player.color, player.position, self.tileSize / 2)

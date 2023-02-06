@@ -5,6 +5,7 @@ import Updateable
 import copy
 
 class Wall(Updateable.Updateable):
+    updated = False
     def __init__(self,x,y,row,col,alive,color,scene):
         self.x = x
         self.y = y
@@ -17,19 +18,19 @@ class Wall(Updateable.Updateable):
         self.gridBuffer = scene.gridBuffer
     # one cycle of the simulation
     def Update(self):
-        updated = False
-        neighbors = self.checkNeighbors()
-        if self.alive and (neighbors < 1 or neighbors > 4):
-            self.scene.gridBuffer[self.row][self.col] = False
-            updated = True
-        if not self.scene.grid[self.row][self.col].alive and neighbors == 3:
-            self.scene.gridBuffer[self.row][self.col] = True
-            updated = True
-        # self.scene.grid = gridCopy
         # Checks to see if the Maze is in a stable state
-        # If it is we want to stop the wallUpdates and spawn the Wall objects
-        if (not updated):
-            stable = True
+        # If it is we don't want to update the walls
+        if not self.scene.stable:
+            self.updated = False
+            neighbors = self.checkNeighbors()
+            if self.alive and (neighbors < 1 or neighbors > 4):
+                self.scene.gridBuffer[self.row][self.col] = False
+                self.updated = True
+                print("updated")
+            if not self.scene.grid[self.row][self.col].alive and neighbors == 3:
+                self.scene.gridBuffer[self.row][self.col] = True
+                self.updated = True
+                print("updated")
 
     # checks all neighbors of a cell and returns the number of neighbors
     def checkNeighbors(self):
