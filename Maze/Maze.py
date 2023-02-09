@@ -19,6 +19,7 @@ class Maze(GameObject.UGameObject):
         for i in range(self.gridSize):
             for j in range(self.gridSize):
                 self.gridBuffer[i][j] = self.grid[i][j].alive
+
     def lateUpdate(self):
         isStable = True
         for i in range(self.gridSize):
@@ -28,6 +29,12 @@ class Maze(GameObject.UGameObject):
                     if self.grid[i][j].updated == True:
                         isStable = False
         self.stable = isStable
+        pos = engine.mouseInputs
+        if pos != None:
+            result = engine.collisionDetector(pos[0], pos[1])
+            if result[1] == True:
+                print(result[0])
+                self.grid[result[0].row][result[0].col].alive = not self.grid[result[0].row][result[0].col].alive
 
         # Fills the board with either an X or W
         # X is for dead cells

@@ -57,7 +57,7 @@ class Engine:
     # detects if a point collides with a rectangle
     # returns True if collided with an object and False if it doesn't
     # returns the object that it collides with
-    def collisionDetector(self, x, y, gameobject = ""):
+    def collisionDetector(self, x, y, gameobject = None):
         for object in self.scene.gameobjects:
                 if object.collidable and object.x < x < (object.x + object.w) and y > object.y and y < (object.y + object.h) and gameobject != object:
                     return [object, True]

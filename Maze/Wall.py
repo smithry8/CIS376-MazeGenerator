@@ -30,11 +30,7 @@ class Wall(GameObject.DUGameObject):
             if not self.maze.grid[self.row][self.col].alive and neighbors == 3:
                 self.maze.gridBuffer[self.row][self.col] = True
                 self.updated = True
-        pos = engine.mouseInputs
-        if pos != None:
-            result = engine.collisionDetector(pos[0],pos[1])
-            if result[1] == True:
-                self.maze.grid[result[0].row][result[0].col].alive = not self.maze.grid[result[0].row][result[0].col].alive
+
 
 
 

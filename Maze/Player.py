@@ -20,11 +20,11 @@ class Player(GameObject.DUGameObject):
     def Draw(self):
         pygame.draw.circle(engine._screen, self.color, self.position, self.radius)
 
-    # def checkWin(self):
-    #     # used to check if the player has reached the bottom right tile for win
-    #     if (self.x >= (engine.scene.gridSize - 2) * engine.scene.tileSize) and \
-    #             (self.y >= (engine.scene.gridSize - 2) * engine.scene.tileSize):
-    #         engine.winGame()
+    def checkWin(self):
+        # used to check if the player has reached the bottom right tile for win
+        if (self.x >= (engine.scene.gridSize - 2) * engine.scene.tileSize) and \
+                (self.y >= (engine.scene.gridSize - 2) * engine.scene.tileSize):
+            engine.winGame()
     def movePlayer(self):
         for event in engine.keyboardInputs:
             if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
