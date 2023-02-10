@@ -1,4 +1,4 @@
-#Created by Ian O'Strander
+#Created by Ian O'Strander and Ryan
 import Updateable
 from Engine import engine
 import pygame, sys

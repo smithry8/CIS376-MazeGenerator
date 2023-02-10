@@ -1,4 +1,4 @@
-#Created By Ian O'Strander
+#Created By Ian O'Strander and Ryan
 import pygame, sys
 from tkinter import messagebox
 
