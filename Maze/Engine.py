@@ -6,15 +6,18 @@ FRAME_RATE = 60
 clock = pygame.time.Clock()
 # The game Engine
 class Engine:
-    scene = None
+    currentScene = None
     def __init__(self):
+        self.scenes = []
         # gets reference to the scene
         pygame.init()
         pygame.display.set_caption('Ryan and Ian Maze Generator / Solver')
         # game loop will run for as long as this is true
         self._running = False
         self._screen = pygame.display.set_mode((600, 600))
+        #list that hold all of the keyboard events during a frame
         self.keyboardInputs = []
+        #holds a mouse input
         self.mouseInputs = None
     def loop(self):
         self._running = True
@@ -37,18 +40,18 @@ class Engine:
                     self.mouseInputs = pygame.mouse.get_pos()
 
             #calls one cycle every frame
-            for updateables in self.scene.updateable:
+            for updateables in self.currentScene.updateable:
                 if hasattr(updateables, "earlyUpdate"):
                     updateables.earlyUpdate()
             # Update all of the walls
-            for updateables in self.scene.updateable:
+            for updateables in self.currentScene.updateable:
                 updateables.Update()
 
-            for updateables in self.scene.updateable:
+            for updateables in self.currentScene.updateable:
                 if hasattr(updateables, "lateUpdate"):
                     updateables.lateUpdate()
             engine._screen.fill((1, 1, 1))
-            for drawables in self.scene.drawable:
+            for drawables in self.currentScene.drawable:
                 drawables.Draw()
             pygame.display.flip()
             #limits frame rate to the FRAME_RATE constant
@@ -58,8 +61,8 @@ class Engine:
     # returns True if collided with an object and False if it doesn't
     # returns the object that it collides with
     def collisionDetector(self, x, y, gameobject = None):
-        for object in self.scene.gameobjects:
-                if object.collidable and object.x < x < (object.x + object.w) and y > object.y and y < (object.y + object.h) and gameobject != object:
+        for object in self.currentScene.gameobjects:
+                if (object.collidable or gameobject == "mouse") and object.x < x < (object.x + object.w) and y > object.y and y < (object.y + object.h) and gameobject != object:
                     return [object, True]
         return [None, False]
 
@@ -69,15 +72,17 @@ class Engine:
         if ans:
             pygame.quit()
             sys.exit()
+
+    #spawns gameobject in current scene
     def spawn(self, gameobject):
-        if self.scene != None:
-            self.scene.spawn(gameobject)
+        if self.currentScene != None:
+            self.currentScene.spawn(gameobject)
         else:
             print("SCENE NOT ADDED")
-
+    #destroys gameobject in current scene
     def destroy(self, gameobject):
-        if self.scene != None:
-            self.scene.destroy(gameobject)
+        if self.currentScene != None:
+            self.currentScene.destroy(gameobject)
         else:
             print("SCENE NOT ADDED")
 

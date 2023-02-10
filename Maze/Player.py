@@ -13,7 +13,7 @@ class Player(GameObject.DUGameObject):
         self.speed = 30
 
     def Update(self):
-        # self.checkWin()
+        self.checkWin()
         self.movePlayer()
 
     # Draws the player
@@ -22,8 +22,7 @@ class Player(GameObject.DUGameObject):
 
     def checkWin(self):
         # used to check if the player has reached the bottom right tile for win
-        if (self.x >= (engine.scene.gridSize - 2) * engine.scene.tileSize) and \
-                (self.y >= (engine.scene.gridSize - 2) * engine.scene.tileSize):
+        if (self.x >= 540) and (self.y >= 540):
             engine.winGame()
     def movePlayer(self):
         for event in engine.keyboardInputs:

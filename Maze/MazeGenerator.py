@@ -6,10 +6,9 @@ import Maze
 # Main Program
 if __name__ == "__main__":
     s = Scene.Scene()
-    engine.scene = s
-    player = Player.Player(45, 45, 1, True)
+    engine.scenes.append(s)
+    engine.currentScene = s
     maze = Maze.Maze(20)
-    engine.spawn(player)
     engine.spawn(maze)
     engine.loop()
 

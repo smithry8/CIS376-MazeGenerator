@@ -2,6 +2,7 @@ import GameObject
 from Engine import engine
 import random
 import Wall
+import Player
 class Maze(GameObject.UGameObject):
     def __init__(self, gridSize, x=-1, y=-1, w=-1, h= -1, layer = -1, tag="", collidable=False):
         GameObject.UGameObject.__init__(self, x, y, w, h, layer, tag, collidable)
@@ -15,30 +16,39 @@ class Maze(GameObject.UGameObject):
         self.gridBuffer = [[0] * 20 for i in range(20)]
         self.initializeGame()
         self.stable = False
-    def earlyUpdate(self):
-        for i in range(self.gridSize):
-            for j in range(self.gridSize):
-                self.gridBuffer[i][j] = self.grid[i][j].alive
 
+    #Gets called before Update
+    def earlyUpdate(self):
+        if not self.stable:
+            for i in range(self.gridSize):
+                for j in range(self.gridSize):
+                    self.gridBuffer[i][j] = self.grid[i][j].alive
+
+    #Gets called after Update
     def lateUpdate(self):
-        isStable = True
-        for i in range(self.gridSize):
-            for j in range(self.gridSize):
-                self.grid[i][j].alive = self.gridBuffer[i][j]
-                if not self.stable:
-                    if self.grid[i][j].updated == True:
-                        isStable = False
-        self.stable = isStable
+        if not self.stable:
+            isStable = True
+            for i in range(self.gridSize):
+                for j in range(self.gridSize):
+                    self.grid[i][j].alive = self.gridBuffer[i][j]
+                    if not self.stable:
+                        if self.grid[i][j].updated == True:
+                            isStable = False
+            if isStable:
+                self.stable = True
+                player = Player.Player(45, 45, 1, True)
+                engine.spawn(player)
+
         pos = engine.mouseInputs
         if pos != None:
-            result = engine.collisionDetector(pos[0], pos[1])
+            result = engine.collisionDetector(pos[0], pos[1], "mouse")
             if result[1] == True:
                 print(result[0])
                 self.grid[result[0].row][result[0].col].alive = not self.grid[result[0].row][result[0].col].alive
 
-        # Fills the board with either an X or W
-        # X is for dead cells
-        # W is for live cells
+    # Fills the board with either an X or W
+    # X is for dead cells
+    # W is for live cells
     def initializeGame(self):
         # Initialize Maze with all Empty Spaces
         for i in range(self.gridSize):

@@ -27,8 +27,13 @@ class Scene:
 
     def destroy(self, gameobject):
         self.gameobjects.remove(gameobject)
-        self.updateable.remove(gameobject)
-        self.drawable.remove(gameobject)
-        self.collidable.append(gameobject)
+        t = type(gameobject)
+        if issubclass(t, GameObject.DUGameObject):
+            self.updateable.remove(gameobject)
+            self.drawable.remove(gameobject)
+        elif issubclass(t, GameObject.DGameObject):
+            self.drawable.remove(gameobject)
+        elif issubclass(t, GameObject.UGameObject):
+            self.updateable.remove(gameobject)
 
 

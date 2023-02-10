@@ -31,9 +31,6 @@ class Wall(GameObject.DUGameObject):
                 self.maze.gridBuffer[self.row][self.col] = True
                 self.updated = True
 
-
-
-
     def Draw(self):
         color = (0, 0, 0) if not self.alive else self.color
         self.collidable = True if self.alive else False
