@@ -5,19 +5,25 @@ import GameObject
 import pygame,sys
 from Engine import engine
 
+# Object that holds all the information for the walls of the maze
 class Wall(GameObject.DUGameObject):
     updated = False
     def __init__(self, x, y, w, h, row, col, color, maze, layer = 0, tag = "", collidable = False):
         GameObject.DUGameObject.__init__(self, x, y, w, h, layer, tag, collidable)
+        # the row of the maze
         self.row = row
+        # the column of the maze
         self.col = col
         self.alive = False
         self.color = color
+        # reference to the maze the wall is in
         self.maze = maze
+
+        # maze information
         self.gridSize = maze.gridSize
         self.gridBuffer = maze.gridBuffer
         self.tileSize = maze.tileSize
-    # one cycle of the simulation
+    # Updates the wall to either alive or dead
     def Update(self):
         # Checks to see if the Maze is in a stable state
         # If it is we don't want to update the walls
@@ -30,21 +36,13 @@ class Wall(GameObject.DUGameObject):
             if not self.maze.grid[self.row][self.col].alive and neighbors == 3:
                 self.maze.gridBuffer[self.row][self.col] = True
                 self.updated = True
-
+    # sets the color of the wall
+    # sets whether the wall should be collidable
+    # draws the walls
     def Draw(self):
         color = (0, 0, 0) if not self.alive else self.color
         self.collidable = True if self.alive else False
         pygame.draw.rect(engine._screen, color, (self.row * self.tileSize, self.col * self.tileSize, self.tileSize, self.tileSize))
-        self.drawLines()
-
-    # Draws a grid on the Maze
-    def drawLines(self):
-        for i in range(self.gridSize):
-            pygame.draw.line(engine._screen, (255, 255, 255), (i * self.tileSize, 0),
-                             (i * self.tileSize, engine._screen.get_height()))
-        for j in range(self.gridSize):
-            pygame.draw.line(engine._screen, (255, 255, 255), (0, j * self.tileSize),
-                             (engine._screen.get_width(), j * self.tileSize))
     # checks all neighbors of a cell and returns the number of neighbors
     def checkNeighbors(self):
         neighbors = 0;

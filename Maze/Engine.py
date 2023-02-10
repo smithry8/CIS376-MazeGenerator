@@ -2,12 +2,16 @@
 import pygame, sys
 from tkinter import messagebox
 
+# Constant variable to set the frame rate
 FRAME_RATE = 60
+# Game clock
 clock = pygame.time.Clock()
 # The game Engine
 class Engine:
+    # holds the scene that is currently being displayed
     currentScene = None
     def __init__(self):
+        # holds all of the scenes
         self.scenes = []
         # gets reference to the scene
         pygame.init()
@@ -21,36 +25,45 @@ class Engine:
         self.mouseInputs = None
     def loop(self):
         self._running = True
+        # Game Loop
         while self._running:
             # EVENTS
             events = pygame.event.get()
+
+            # reset keyboard and mouse inputs
             self.keyboardInputs = []
             self.mouseInputs = None
+
+            # loop through all of the events
             for event in events:
+                # quits game
                 if event.type == pygame.QUIT:
                     self.running = False
                     pygame.quit()
                     sys.exit()
+                # processes keybord inputs
                 if event.type == pygame.KEYDOWN:
                     self.keyboardInputs.append(event)
                     if event.key == pygame.K_q:
                         self.quitGame()
-                # Handles mouse touching walls
+                # processes mouse inputs
                 if event.type == pygame.MOUSEBUTTONUP:
                     self.mouseInputs = pygame.mouse.get_pos()
 
-            #calls one cycle every frame
-            for updateables in self.currentScene.updateable:
+            # calls all objects with earlyUpdate function
+            for updateables in self.currentScene.earlyupdates:
                 if hasattr(updateables, "earlyUpdate"):
                     updateables.earlyUpdate()
-            # Update all of the walls
+            # calls every updateable objects Update function
             for updateables in self.currentScene.updateable:
                 updateables.Update()
-
-            for updateables in self.currentScene.updateable:
+            # calls all objects with lateUpdate function
+            for updateables in self.currentScene.lateupdates:
                 if hasattr(updateables, "lateUpdate"):
                     updateables.lateUpdate()
+            # clear screen
             engine._screen.fill((1, 1, 1))
+            # draw all drawable objects
             for drawables in self.currentScene.drawable:
                 drawables.Draw()
             pygame.display.flip()
