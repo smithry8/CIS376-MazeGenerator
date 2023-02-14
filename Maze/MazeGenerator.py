@@ -7,6 +7,7 @@ import copy
 from pygame.locals import *
 from tkinter import *
 from tkinter import messagebox
+from MathLib import Vector2, Vector3,Matrix4
 import tkinter as tk
 
 DISPLAYSURF = pygame.display.set_mode((600, 600))
@@ -170,10 +171,17 @@ def quitGame():
         pygame.quit()
         sys.exit()
 if __name__ == "__main__":
-    print("name:" + __name__)
-    initializeGame()
-    e = Engine()
-    e.loop()
+    v = Vector3.Vector3(4,7,2,0)
+    m1 = Matrix4.Matrix4((2,0,0,0), (0,2,0,0),(0,0,2,0), (0,0,0,1))
+    m2 = Matrix4.Matrix4((1,0,0,0), (0,1,0,0),(0,0,1,0), (0,0,0,1))
+    m3 = Matrix4.Matrix4((2,0,0,0), (0,2,0,0),(0,0,2,0), (0,0,0,1))
+
+    print(m1.__eq__(m3))
+
+    # print("name:" + __name__)
+    # initializeGame()
+    # e = Engine()
+    # e.loop()
 
 
 

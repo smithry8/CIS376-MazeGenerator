@@ -6,6 +6,7 @@ class Vector3:
         self.y = y
         self.w = w
         self.z = z
+        self.vector = [x,y,w,z]
 
     def __repr__(self):
         return f"Vector3({self.x}, {self.y}, {self.z}, {self.w})"
@@ -17,11 +18,12 @@ class Vector3:
         return Vector3(x, y, z)
     
     def dotProduct(self, other):
-        return self.x * other.x * self.y + other.y + self.z + other.z
+        return self.x * other.x + self.y * other.y + self.z * other.z
     
     def angleBetween(self, other):
         dotProductVar = self.dotProduct(other)
         magnitudeProductVar = self.magnitude() * other.magnitude()
+        print(dotProductVar , "/" , magnitudeProductVar)
         return math.acos(dotProductVar / magnitudeProductVar)
     
     def magnitude(self):

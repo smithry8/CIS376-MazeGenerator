@@ -5,6 +5,7 @@ class Vector2:
         self.x = x
         self.y = y
         self.w = w
+        self.vector = [x,y,w]
 
     def __repr__(self):
         return f"Vector2({self.x}, {self.y}, {self.w})"
@@ -14,7 +15,7 @@ class Vector2:
         return Vector2(0, 0, z)
     
     def dotProduct(self, other):
-        return self.x * other.x * self.y + other.y
+        return self.x * other.x + self.y * other.y
     
     def angleBetween(self, other):
         dotProductVar = self.dotProduct(other)
