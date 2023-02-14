@@ -1,9 +1,9 @@
 #Created by Ian O'Strander
 #A class that holds information about a Wall
 stable = False
-import GameObject
+from GameEngine import GameObject
 import pygame,sys
-from Engine import engine
+from GameEngine.Engine import engine
 
 # Object that holds all the information for the walls of the maze
 class Wall(GameObject.DUGameObject):

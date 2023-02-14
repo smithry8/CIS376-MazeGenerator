@@ -2,7 +2,6 @@
 from GameEngine import Updateable
 from GameEngine import Drawable
 
-
 # Object that holds all gameobject information
 class GameObject():
     def __init__(self,x,y,w,h,layer,tag,collidable):

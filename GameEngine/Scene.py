@@ -1,7 +1,5 @@
 # Created By Ian O'Strander
 from GameEngine import GameObject
-
-
 # Holds all of gameobjects
 class Scene:
     #holds all gameobjects that are updateable

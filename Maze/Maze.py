@@ -1,6 +1,6 @@
 # Created by Ian
-import GameObject
-from Engine import engine
+from GameEngine import GameObject
+from GameEngine.Engine import engine
 import pygame
 import random
 import Wall

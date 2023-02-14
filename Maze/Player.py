@@ -1,8 +1,7 @@
 #Created by Ian O'Strander and Ryan
-import Updateable
-from Engine import engine
-import pygame, sys
-import GameObject
+from GameEngine.Engine import engine
+import pygame
+from GameEngine import GameObject
 # A class that holds information about the player
 class Player(GameObject.DUGameObject):
     def __init__(self, x, y, collidable, w = 0, h = 0, layer = 0, tag = "", color = (255,255,255)):
