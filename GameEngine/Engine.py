@@ -1,9 +1,6 @@
 #Created By Ian O'Strander and Ryan
 import pygame, sys
 from tkinter import messagebox
-
-# Constant variable to set the frame rate
-FRAME_RATE = 60
 # Game clock
 clock = pygame.time.Clock()
 # The game Engine
@@ -11,6 +8,8 @@ class Engine:
     # holds the scene that is currently being displayed
     currentScene = None
     def __init__(self):
+        # Constant variable to set the frame rate
+        self.FRAME_RATE = 60
         # holds all of the scenes
         self.scenes = []
         # gets reference to the scene
@@ -18,11 +17,17 @@ class Engine:
         pygame.display.set_caption('Ryan and Ian Maze Generator / Solver')
         # game loop will run for as long as this is true
         self._running = False
-        self._screen = pygame.display.set_mode((600, 600))
-        #list that hold all of the keyboard events during a frame
+        # list that hold all of the keyboard events during a frame
         self.keyboardInputs = []
-        #holds a mouse input
+        # holds a mouse input
         self.mouseInputs = None
+        self._screen = pygame.display.set_mode((600, 600))
+        self.tileSize = 30
+        self.backgroundColor = (1,1,1)
+
+    def changeScreenSize(self,w,h):
+        self._screen = pygame.display.set_mode((w, h))
+
     def loop(self):
         self._running = True
         # Game Loop
@@ -49,7 +54,6 @@ class Engine:
                 # processes mouse inputs
                 if event.type == pygame.MOUSEBUTTONUP:
                     self.mouseInputs = pygame.mouse.get_pos()
-
             # calls all objects with earlyUpdate function
             for updateables in self.currentScene.earlyupdates:
                 if hasattr(updateables, "earlyUpdate"):
@@ -62,13 +66,13 @@ class Engine:
                 if hasattr(updateables, "lateUpdate"):
                     updateables.lateUpdate()
             # clear screen
-            engine._screen.fill((1, 1, 1))
+            self._screen.fill(self.backgroundColor)
             # draw all drawable objects
             for drawables in self.currentScene.drawable:
                 drawables.Draw()
             pygame.display.flip()
             #limits frame rate to the FRAME_RATE constant
-            clock.tick(FRAME_RATE)
+            clock.tick(self.FRAME_RATE)
 
     # detects if a point collides with a rectangle
     # returns True if collided with an object and False if it doesn't
