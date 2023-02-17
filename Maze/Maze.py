@@ -1,6 +1,6 @@
 # Created by Ian
 from GameEngine import GameObject
-from GameEngine.Engine import engine
+from MazeGenerator import engine
 import pygame
 import random
 import Wall

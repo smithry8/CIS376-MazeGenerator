@@ -1,21 +1,23 @@
 # Created By Ian O'Strander
 from GameEngine import GameObject
+from GameEngine.Engine import engine
 # Holds all of gameobjects
 class Scene:
-    #holds all gameobjects that are updateable
-    updateable = []
-    #holds all gameobjects that are updateable
-    drawable = []
-    #holds all gameobjects
-    gameobjects = []
-    #holds all gameobjects that have the function earlyUpdate
-    earlyupdates = []
-    #holds all gameobjects that have the function lateUpdate
-    lateupdates = []
-    # True if the Maze is no longer updating
-    stable = False
     def __init__(self):
-        pass
+        #add the scene to engines list of scenes
+        engine.scenes.append(self)
+        #make this scene the current scene
+        engine.currentScene = self
+        # holds all gameobjects that are updateable
+        self.updateable = []
+        # holds all gameobjects that are updateable
+        self.drawable = []
+        # holds all gameobjects
+        self.gameobjects = []
+        # holds all gameobjects that have the function earlyUpdate
+        self.earlyupdates = []
+        # holds all gameobjects that have the function lateUpdate
+        self.lateupdates = []
     # adds the gameobject in to the scene and puts them in the correct lists
     def spawn(self, gameobject):
         self.gameobjects.append(gameobject)
@@ -26,9 +28,9 @@ class Scene:
             self.lateupdates.append(gameobject)
         if issubclass(t, GameObject.DUGameObject):
             self.updateable.append(gameobject)
-            self.drawable.append(gameobject)
+            self.layerInsert(gameobject)
         elif issubclass(t, GameObject.DGameObject):
-            self.drawable.append(gameobject)
+            self.layerInsert(gameobject)
         elif issubclass(t, GameObject.UGameObject):
             self.updateable.append(gameobject)
     # removes gameobject from the scene
@@ -46,5 +48,11 @@ class Scene:
             self.drawable.remove(gameobject)
         elif issubclass(t, GameObject.UGameObject):
             self.updateable.remove(gameobject)
+    def layerInsert(self, gameObject):
+        for d in range(len(self.drawable)):
+            if self.drawable[d].layer > gameObject.layer:
+                self.drawable.insert(d, gameObject)
+                return
+        self.drawable.append(gameObject)
 
 
