@@ -18,6 +18,8 @@ class Scene:
         self.earlyupdates = []
         # holds all gameobjects that have the function lateUpdate
         self.lateupdates = []
+        self.all_sprites = []
+        self.camera = None
     # adds the gameobject in to the scene and puts them in the correct lists
     def spawn(self, gameobject):
         self.gameobjects.append(gameobject)

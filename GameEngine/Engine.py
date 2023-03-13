@@ -19,6 +19,7 @@ class Engine:
         self._running = False
         # list that hold all of the keyboard events during a frame
         self.keyboardInputs = []
+        self.keyPressed = []
         # holds a mouse input
         self.mouseInputs = None
         self._screen = pygame.display.set_mode((600, 600))
@@ -35,8 +36,9 @@ class Engine:
             # EVENTS
             events = pygame.event.get()
 
-            # reset keyboard and mouse inputs
-            self.keyboardInputs = []
+            # get keyboard and mouse inputs
+            self.keyboardInputs = events
+            self.keyPressed = pygame.key.get_pressed()
             self.mouseInputs = None
 
             # loop through all of the events
@@ -48,7 +50,7 @@ class Engine:
                     sys.exit()
                 # processes keybord inputs
                 if event.type == pygame.KEYDOWN:
-                    self.keyboardInputs.append(event)
+                    # self.keyboardInputs.append(event)
                     if event.key == pygame.K_q:
                         self.quitGame()
                 # processes mouse inputs
@@ -67,9 +69,11 @@ class Engine:
                     updateables.lateUpdate()
             # clear screen
             self._screen.fill(self.backgroundColor)
+            # for drawables in self.currentScene.all_sprites:
+            #     drawables.draw(self._screen)
             # draw all drawable objects
             for drawables in self.currentScene.drawable:
-                drawables.Draw()
+                engine._screen.blit(drawables.image, (drawables.rect.x - engine.currentScene.camera.offset_x, drawables.rect.y - engine.currentScene.camera.offset_y))
             pygame.display.flip()
             #limits frame rate to the FRAME_RATE constant
             clock.tick(self.FRAME_RATE)
