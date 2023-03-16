@@ -20,14 +20,17 @@ vel_iters, pos_iters = 6, 2
 
 
 class StaticObject(go.DGameObject):
-    def __init__(self, x, y, w, h, collidable):
+    def __init__(self, x, y, w, h, collidable, cb = 0x0000, mb = 0xFFFF):
         super().__init__(x, y, w, h, collidable)
-        self.body = world.CreateStaticBody(position=(x * w2b, y * w2b), shapes=b2PolygonShape(box=(w * w2b / 2, h * w2b / 2)))
+        shape = b2PolygonShape(box=(w * w2b / 2, h * w2b / 2))
+        self.body = world.CreateStaticBody(position=(x * w2b, y * w2b), shapes = shape)
+        self.fixDef = b2FixtureDef(shape=shape)
+        self.fixDef.filter.categoryBits = cb
+        self.fixDef.filter.maskBits = mb
+        self.box = self.body.CreateFixture(self.fixDef)
         self.image = pg.Surface((w, h), pg.SRCALPHA, 32)
-        self.image.fill((0, 255, 0))
         self.rect = self.image.get_rect()
         self.rect.center = self.body.position.x * b2w, 768 - self.body.position.y * b2w
-        groundGroup.add(self)
 
     def Draw(self):
         pass
@@ -117,7 +120,6 @@ class Player(go.DUGameObject):
         collided = pg.sprite.spritecollide(self, groundGroup, False)
         self.timeSinceShot += 1
         if(len(collided) > 0):
-            # print("colliding")
             self.isGrounded = True
             self.hasJump = True
         else:
@@ -186,7 +188,6 @@ class Enemy(go.DUGameObject):
         self.body = world.CreateDynamicBody(position=(x * w2b, y * w2b))
         shape = b2PolygonShape(box=(w * w2b/2, h * w2b/2))
         self.fixDef = b2FixtureDef(shape=shape)
-        self.fixDef = b2FixtureDef(shape=shape)
         self.fixDef.filter.maskBits = 0xFFFF
         self.fixDef.filter.categoryBits = 0x0001
         self.box = self.body.CreateFixture(self.fixDef)
@@ -254,24 +255,29 @@ def loadGame():
     size = 2000
     loadSprite("wall", "./assets/DungeonTileset/frames/wall_mid.png",sprites)
     loadSprite("collider", "./assets/DungeonTileset/frames/crate.png",sprites)
-    print(sprites)
     i = 0
     j = 0
     for tile in range(2000):
         before = i
         if (not (i := tile % width)) and before != 0:
             j += 1
-        # print(j)
         for layers in level:
             data = layers['data'][(j * width) + i]
             if data != 0 and data != 37:
                 x = i * 64
                 y = j * 64
-                t = StaticObject(x, y, 64,64, True)
-                # if data == 69:
-                #     t.image = sprites['wall']
-                # elif data == 91:
-                #     t.image = sprites['collider']
+                if data == 69:
+                    t = StaticObject(x, y * -1, 64, 64, True)
+                    t.image = sprites['wall']
+                    groundGroup.add(t)
+                elif data == 91:
+                    shape = b2PolygonShape(box=(64 * w2b / 2, 64 * w2b / 2))
+                    t = StaticObject(x, y * -1, 64, 64, False, 0x0005, 0x0001)
+                    t.fixDef = b2FixtureDef(shape=shape)
+                    # t.fixDef.filter.categoryBits = cb
+                    t.fixDef.filter.maskBits = 0x0001
+                    t.box = t.body.CreateFixture(t.fixDef)
+                    t.image = sprites['collider']
                 engine.spawn(t)
 
 if __name__ == "__main__":
@@ -281,13 +287,13 @@ if __name__ == "__main__":
     playerGroup = pg.sprite.Group()
     enemyGroup = pg.sprite.Group()
     projectileGroup = pg.sprite.Group()
-    player = Player(100,200,64,125)
-    enemy = Enemy(64,300,64,125)
+    player = Player(2000,-30,64,125)
+    enemy = Enemy(2000,-150,64,125)
     loadGame()
     playerGroup.add(player)
     enemyGroup.add(enemy)
     engine.spawn(player)
-    # engine.spawn(enemy)
+    engine.spawn(enemy)
     scene.all_sprites.append(groundGroup)
     scene.all_sprites.append(playerGroup)
     scene.all_sprites.append(enemyGroup)
