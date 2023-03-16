@@ -19,11 +19,11 @@ timeStep = 1.0 / 60
 vel_iters, pos_iters = 6, 2
 
 
-class Ground(go.DGameObject):
-    def __init__(self, x, y, w, h, tag = "", collidable = False):
-        super().__init__(x, y, w, h, tag, collidable)
-        self.body = world.CreateStaticBody(position=(x, y), shapes=b2PolygonShape(box=(w, h)))
-        self.image = pg.Surface((w * b2w, h * b2w))
+class StaticObject(go.DGameObject):
+    def __init__(self, x, y, w, h, collidable):
+        super().__init__(x, y, w, h, collidable)
+        self.body = world.CreateStaticBody(position=(x * w2b, y * w2b), shapes=b2PolygonShape(box=(w * w2b / 2, h * w2b / 2)))
+        self.image = pg.Surface((w, h), pg.SRCALPHA, 32)
         self.image.fill((0, 255, 0))
         self.rect = self.image.get_rect()
         self.rect.center = self.body.position.x * b2w, 768 - self.body.position.y * b2w
@@ -32,27 +32,26 @@ class Ground(go.DGameObject):
     def Draw(self):
         pass
 
-
 class Bullet(go.DUGameObject):
-    def __init__(self, x = 0, y = 0, w = 0.2, h = 0.2, tag = "", collidable = False):
-        super().__init__(x, y, w, h, tag, collidable)
+    def __init__(self, w = 25, h = 25):
+        super().__init__(w=w, h=h)
         self.body = world.CreateDynamicBody(position=(player.body.position.x, player.body.position.y), gravityScale = 0.0)
-        shape = b2PolygonShape(box=(w/2, h/2))
+        shape = b2PolygonShape(box=(w * w2b/2, h * w2b/2))
         self.fixDef = b2FixtureDef(shape=shape, density=.5)
         self.fixDef.filter.categoryBits = 0x0003
         self.fixDef.filter.maskBits &= ~0x0002
         self.fixDef.filter.maskBits &= ~0x0003
         self.box = self.body.CreateFixture(self.fixDef)
         self.dirty = 2
-        d = .5 * b2w
+        d = w
         self.image = pg.Surface((d, d), pg.SRCALPHA, 32)
         self.image.convert_alpha()
         self.image.fill((0, 0, 0, 0))
         self.rect = self.image.get_rect()
-        pg.draw.circle(self.image, (0, 101, 164), self.rect.center, w/2 * b2w)
+        pg.draw.circle(self.image, (0, 101, 164), self.rect.center, w/2)
         self.velocity = b2Vec2(player.direction * 0.05, 0)
     def Update(self):
-        self.rect.center = self.body.position[0] * b2w, 770 - self.body.position[1] * b2w
+        self.rect.center = self.body.position.x * b2w, 770 - self.body.position.y * b2w
         enemyCollisions = pg.sprite.spritecollide(self, enemyGroup, False)
         groundCollisions = pg.sprite.spritecollide(self, groundGroup, False)
         collided = len(enemyCollisions) + len(groundCollisions)
@@ -85,18 +84,18 @@ class Camera(go.UGameObject):
 class Player(go.DUGameObject):
     def __init__(self, x, y, w, h, tag = "", collidable = False):
         super().__init__(x, y, w, h, tag, collidable)
-        self.body = world.CreateDynamicBody(position=(x, y))
-        shape = b2PolygonShape(box=(w/2, h/2))
+        self.body = world.CreateDynamicBody(position=(x * w2b, y * w2b))
+        shape = b2PolygonShape(box=(w * w2b/2, h * w2b/2))
         self.fixDef = b2FixtureDef(shape=shape)
         self.fixDef.filter.categoryBits = 0x0002
         self.box = self.body.CreateFixture(self.fixDef)
         self.dirty = 2
-        self.image = pg.Surface((w * b2w, h * b2w), pg.SRCALPHA, 32)
+        self.image = pg.Surface((w, h), pg.SRCALPHA, 32)
         self.image.convert_alpha()
         self.image.fill((0, 0, 0, 0))
         self.rect = self.image.get_rect()
         self.body.mass = 1.0
-        pg.draw.rect(self.image, (0, 101, 164), (x- w/2, y - h/2, w * b2w, h * b2w))
+        pg.draw.rect(self.image, (0, 101, 164), (self.rect.x, self.rect.y, w, h))
         self.inputs = {
             'left' : False,
             'right' : False,
@@ -114,10 +113,11 @@ class Player(go.DUGameObject):
 
     def Update(self):
         currentTime = pg.time.get_ticks()
-        self.rect.center = self.body.position[0] * b2w, 771  - self.body.position[1] * b2w
+        self.rect.center = self.body.position.x * b2w, 771 - self.body.position.y * b2w
         collided = pg.sprite.spritecollide(self, groundGroup, False)
         self.timeSinceShot += 1
         if(len(collided) > 0):
+            # print("colliding")
             self.isGrounded = True
             self.hasJump = True
         else:
@@ -128,7 +128,6 @@ class Player(go.DUGameObject):
                 if self.isGrounded and event.key == pg.K_SPACE:
                     self.body.ApplyLinearImpulse(b2Vec2(0, self.jumpHeight), self.body.position, True)
                 if event.key == pg.K_j and (currentTime - self.timeSinceShot) / 1000 > self.weaponCoolDown:
-                    print(currentTime - self.timeSinceShot)
                     updater.add(Bullet(), projectileGroup)
                     self.timeSinceShot = pg.time.get_ticks()
         velocity = self.body.linearVelocity
@@ -184,23 +183,28 @@ class Player(go.DUGameObject):
 class Enemy(go.DUGameObject):
     def __init__(self, x, y, w, h, tag = "", collidable = False):
         super().__init__(x, y, w, h, tag, collidable)
-        self.body = world.CreateDynamicBody(position=(x, y))
-        shape = b2PolygonShape(box=(w/2, h/2))
+        self.body = world.CreateDynamicBody(position=(x * w2b, y * w2b))
+        shape = b2PolygonShape(box=(w * w2b/2, h * w2b/2))
         self.fixDef = b2FixtureDef(shape=shape)
         self.fixDef = b2FixtureDef(shape=shape)
         self.fixDef.filter.maskBits = 0xFFFF
         self.fixDef.filter.categoryBits = 0x0001
         self.box = self.body.CreateFixture(self.fixDef)
         self.dirty = 2
-        self.image = pg.Surface((w * b2w, h * b2w), pg.SRCALPHA, 32)
+        self.image = pg.Surface((w, h), pg.SRCALPHA, 32)
         self.image.convert_alpha()
         self.image.fill((0, 0, 0, 0))
         self.rect = self.image.get_rect()
         self.body.mass = 1.0
-        pg.draw.rect(self.image, (101, 0, 164), (x- w/2, y - h/2, w * b2w, h * b2w))
+        pg.draw.rect(self.image, (101, 0, 164), (self.rect.x, self.rect.y, w, h))
         self.maxSpeed = 2
+        self.velocity = b2Vec2(1,0)
     def Update(self):
-        self.rect.center = self.body.position[0] * b2w, 771 - self.body.position[1] * b2w
+        self.rect.center = self.body.position.x * b2w, 771 - self.body.position.y * b2w
+        self.body.ApplyLinearImpulse(self.velocity, self.body.position, True)
+        collision = pg.sprite.spritecollide(self, groundGroup, False)
+        if not len(collision):
+            self.velocity *= -1
     def Draw(self):
         pass
 
@@ -228,62 +232,62 @@ class Updater(go.UGameObject):
         engine.spawn(object)
         engine.currentScene.all_sprites.append(group)
 
-class Tile(go.DUGameObject):
-    def __init__(self, x=0, y=0, w=0, h=0, tag="", collidable=False):
-        super().__init__(x, y, w, h, tag, collidable)
-        self.body = world.CreateStaticBody(position=(x * w2b, y * w2b), shapes=b2PolygonShape(box=(w * w2b, h * w2b)))
-        groundGroup.add(self)
+class Tile(go.DGameObject):
+    def __init__(self):
+        super().__init__()
     def Draw(self):
         pass
-    def Update(self):
-        # print(self.rect.x)
-        pass
+
+def loadSprite(key, path, sprites):
+    t = Tile()
+    t.image = pg.Surface((64, 64), pg.SRCALPHA, 32)
+    sprite = pg.transform.scale(pg.image.load(path), (64, 64))
+    t.image.blit(sprite, (0, 0, 64, 64))
+    sprites[key] = t.image
 
 def loadGame():
     file = open("newmap.tmj")
     level = json.load(file)
-    level = level['layers'][0]['data']
-    sprites = []
+    level = level['layers']
     width = 100
-    wall = pg.image.load("./assets/DungeonTileset/frames/wall_mid.png")
-    t = Tile()
-    t.image = pg.Surface((64, 64), pg.SRCALPHA)
-    wall = pg.transform.scale(wall, (64, 64))
-    t.image.blit(wall, (0, 0))
-    t.rect = t.image.get_rect()
-    sprites.append(t)
-    sprites.append(wall)
+    height = 20
+    size = 2000
+    loadSprite("wall", "./assets/DungeonTileset/frames/wall_mid.png",sprites)
+    loadSprite("collider", "./assets/DungeonTileset/frames/crate.png",sprites)
+    print(sprites)
     i = 0
     j = 0
-    for tile in range(len(level)):
+    for tile in range(2000):
         before = i
         if (not (i := tile % width)) and before != 0:
             j += 1
-        print(i, j)
-        if level[(j * width) + i] != 0:
-            w = i * 64
-            h = j * 64
-            t = Tile(w, h, 64,64)
-            t.image = sprites[0].image
-            t.rect = t.image.get_rect()
-            t.rect = pg.Rect(w, h, 64, 64)
-            # t = Ground(w * w2b, h * w2b, 64 * w2b, 64 * w2b)
-            engine.spawn(t)
+        # print(j)
+        for layers in level:
+            data = layers['data'][(j * width) + i]
+            if data != 0 and data != 37:
+                x = i * 64
+                y = j * 64
+                t = StaticObject(x, y, 64,64, True)
+                # if data == 69:
+                #     t.image = sprites['wall']
+                # elif data == 91:
+                #     t.image = sprites['collider']
+                engine.spawn(t)
 
 if __name__ == "__main__":
+    sprites = {}
     scene = scn.Scene()
-    print(engine.currentScene)
     groundGroup = pg.sprite.Group()
     playerGroup = pg.sprite.Group()
     enemyGroup = pg.sprite.Group()
     projectileGroup = pg.sprite.Group()
-    player = Player(7,5,.5,1)
-    enemy = Enemy(3,5,.5,1)
+    player = Player(100,200,64,125)
+    enemy = Enemy(64,300,64,125)
     loadGame()
     playerGroup.add(player)
     enemyGroup.add(enemy)
     engine.spawn(player)
-    engine.spawn(enemy)
+    # engine.spawn(enemy)
     scene.all_sprites.append(groundGroup)
     scene.all_sprites.append(playerGroup)
     scene.all_sprites.append(enemyGroup)
