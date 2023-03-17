@@ -12,6 +12,8 @@ import GameEngine.Scene as scn
 import pygame as pg
 from Box2D import *
 import random
+from tkinter import *
+from tkinter import messagebox
 
 w2b = 1 / 100
 b2w = 100
@@ -25,6 +27,7 @@ pg.mixer.music.load("./assets/SoundEffects/metmhide.mid")
 shooting = pg.mixer.Sound("./assets/SoundEffects/507016__mrthenoronha__gun-shot-3-8-bit.wav")
 enemyHitSound = pg.mixer.Sound("./assets/SoundEffects/138480__justinvoke__bullet-blood-3.wav")
 wallHitSound = pg.mixer.Sound("./assets/SoundEffects/522401__filmmakersmanual__bullet-concrete-hit-4.wav")
+playerHitSound = pg.mixer.Sound("./assets/SoundEffects/385046__mortisblack__damage.ogg")
 #pg.mixer.Sound.set_volume(1.0)
 
 class StaticObject(go.DGameObject):
@@ -139,6 +142,8 @@ class Player(go.DUGameObject):
         self.weaponCoolDown = 0.3
         self.image = sprites['Player']
         self.health = 5
+        self.gameLost = False
+        self.gameWon = False
     def Update(self):
         currentTime = pg.time.get_ticks()
         self.rect.center = self.body.position.x * b2w + 10, 771 - self.body.position.y * b2w
@@ -159,10 +164,12 @@ class Player(go.DUGameObject):
                     self.timeSinceShot = pg.time.get_ticks()
         collided = len(pg.sprite.spritecollide(self, doorGroup, False))
         if collided > 0:
-            print("WON") # put win message here
+            print("WON")
+            self.gameWon = True
         if self.health < 0:
             updater.remove(self, playerGroup)
-            print("LOST") # put lost message here
+            print("LOST")
+            self.gameLost = True
         velocity = self.body.linearVelocity
         speed = velocity.length
         self.handleJump(velocity, speed)
@@ -255,6 +262,7 @@ class Enemy(go.DUGameObject):
                 player.health -= 1
                 self.velocity *= -1
                 self.playerDamageCooldown = True
+                pg.mixer.Sound.play(playerHitSound)
         else:
             self.playerDamageCooldown = False
         if len(colliderCollision) > 0:
@@ -278,6 +286,7 @@ class Updater(go.UGameObject):
     def Update(self):
         world.Step(timeStep, vel_iters, pos_iters)
         world.ClearForces()
+        self.gameEnd()
 
     def remove(self, object, group = None):
         if group is not None:
@@ -293,6 +302,18 @@ class Updater(go.UGameObject):
             group.add(object)
         engine.spawn(object)
         engine.currentScene.all_sprites.append(group)
+
+    def gameEnd(self):
+        if player.gameLost:
+            done = messagebox.showinfo("Game Lost", "Quit")
+            if done:
+                pg.quit()
+                sys.exit()
+        if player.gameWon:
+            done2 = messagebox.showinfo("Game Won", "Congrats, Exit Here!")
+            if done2:
+                pg.quit()
+                sys.exit()
 
 class Tile(go.DGameObject):
     def __init__(self):
