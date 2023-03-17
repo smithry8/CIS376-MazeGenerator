@@ -12,6 +12,8 @@ import GameEngine.Scene as scn
 import pygame as pg
 from Box2D import *
 import random
+from tkinter import *
+from tkinter import messagebox
 
 w2b = 1 / 100
 b2w = 100
@@ -25,7 +27,7 @@ pg.mixer.music.load("./assets/SoundEffects/metmhide.mid")
 shooting = pg.mixer.Sound("./assets/SoundEffects/507016__mrthenoronha__gun-shot-3-8-bit.wav")
 enemyHitSound = pg.mixer.Sound("./assets/SoundEffects/138480__justinvoke__bullet-blood-3.wav")
 wallHitSound = pg.mixer.Sound("./assets/SoundEffects/522401__filmmakersmanual__bullet-concrete-hit-4.wav")
-#pg.mixer.Sound.set_volume(1.0)
+playerHitSound = pg.mixer.Sound("./assets/SoundEffects/385046__mortisblack__damage.ogg")
 
 class StaticObject(go.DGameObject):
     def __init__(self, x, y, w, h, collidable, cb = 0x0000, mb = 0xFFFF):
@@ -116,7 +118,6 @@ class Player(go.DUGameObject):
         shape.vertices = vertices
 
 
-
         self.fixDef = b2FixtureDef(shape=shape)
         self.fixDef.filter.categoryBits = 0x0002
         self.box = self.body.CreateFixture(self.fixDef)
@@ -142,6 +143,7 @@ class Player(go.DUGameObject):
         self.weaponCoolDown = 0.3
         self.image = sprites['Player']
         self.health = 5
+        self.gameLost = False
     def Update(self):
         currentTime = pg.time.get_ticks()
         self.rect.center = self.body.position.x * b2w, 771 - self.body.position.y * b2w
@@ -162,6 +164,10 @@ class Player(go.DUGameObject):
                     self.timeSinceShot = pg.time.get_ticks()
         if self.health < 0:
             updater.remove(self, playerGroup)
+            print(playerGroup)
+            self.gameLost = True
+
+
         velocity = self.body.linearVelocity
         speed = velocity.length
         self.handleJump(velocity, speed)
@@ -255,6 +261,7 @@ class Enemy(go.DUGameObject):
             player.health -= 1
             self.velocity *= -1
             self.playerDamageCooldown = True
+            pg.mixer.Sound.play(playerHitSound)
         else:
             self.playerDamageCooldown = False
         if len(colliderCollision) > 0:
@@ -275,6 +282,7 @@ class Updater(go.UGameObject):
     def Update(self):
         world.Step(timeStep, vel_iters, pos_iters)
         world.ClearForces()
+        self.gameEnd()
 
     def remove(self, object, group = None):
         if group is not None:
@@ -290,6 +298,13 @@ class Updater(go.UGameObject):
             group.add(object)
         engine.spawn(object)
         engine.currentScene.all_sprites.append(group)
+
+    def gameEnd(self):
+        if player.gameLost:
+            done = messagebox.showinfo("Game Lost", "Quit")
+            if done:
+                pg.quit()
+                sys.exit()
 
 class Tile(go.DGameObject):
     def __init__(self):
@@ -350,7 +365,9 @@ if __name__ == "__main__":
     loadSprite("Enemy", "./assets/DungeonTileset/frames/big_demon_idle_anim_f0.png", 64, 125)
     loadSprite("Player", "./assets/DungeonTileset/frames/knight_m_idle_anim_f0.png", 64, 125)
     loadSprite("Bullet", "./assets/DungeonTileset/frames/weapon_arrow.png", 10, 25)
+    loadSprint("PlayerM1", "./assets/DungeonTileset/frames/knight_m_run_anim_f0.png", 64, 125)
     scene = scn.Scene()
+    gameLost = False
     groundGroup = pg.sprite.Group()
     playerGroup = pg.sprite.Group()
     enemyGroup = pg.sprite.Group()

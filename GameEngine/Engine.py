@@ -89,7 +89,7 @@ class Engine:
 
     # Quit game dialog
     def quitGame(self):
-        ans = messagebox.askyesno("Quitting", "Are you sure you want to quit")
+        ans = box.askyesno("Quitting", "Are you sure you want to quit")
         if ans:
             pygame.quit()
             sys.exit()
