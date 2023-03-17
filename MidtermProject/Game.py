@@ -1,5 +1,8 @@
 import json
+import math
 import sys
+
+import pygame.transform
 
 sys.path.append("../")
 
@@ -25,10 +28,12 @@ class StaticObject(go.DGameObject):
         shape = b2PolygonShape(box=(w * w2b / 2, h * w2b / 2))
         self.body = world.CreateStaticBody(position=(x * w2b, y * w2b), shapes = shape)
         self.fixDef = b2FixtureDef(shape=shape)
+        self.fixDef.shape._radius = 0.1
         self.fixDef.filter.categoryBits = cb
         self.fixDef.filter.maskBits = mb
         self.box = self.body.CreateFixture(self.fixDef)
         self.image = pg.Surface((w, h), pg.SRCALPHA, 32)
+        self.image.fill((0,255,0))
         self.rect = self.image.get_rect()
         self.rect.center = self.body.position.x * b2w, 768 - self.body.position.y * b2w
 
@@ -48,17 +53,19 @@ class Bullet(go.DUGameObject):
         self.dirty = 2
         d = w
         self.image = pg.Surface((d, d), pg.SRCALPHA, 32)
+        self.image = sprites['Bullet']
         self.image.convert_alpha()
-        self.image.fill((0, 0, 0, 0))
         self.rect = self.image.get_rect()
-        pg.draw.circle(self.image, (0, 101, 164), self.rect.center, w/2)
         self.velocity = b2Vec2(player.direction * 0.05, 0)
+        self.image = pygame.transform.rotate(self.image, player.direction * 270)
     def Update(self):
         self.rect.center = self.body.position.x * b2w, 770 - self.body.position.y * b2w
         enemyCollisions = pg.sprite.spritecollide(self, enemyGroup, False)
         groundCollisions = pg.sprite.spritecollide(self, groundGroup, False)
         collided = len(enemyCollisions) + len(groundCollisions)
         if collided > 0:
+            for object in enemyCollisions:
+                object.health -= 1
             updater.remove(self)
         self.body.ApplyLinearImpulse(self.velocity, self.body.position, True)
 
@@ -88,14 +95,25 @@ class Player(go.DUGameObject):
     def __init__(self, x, y, w, h, tag = "", collidable = False):
         super().__init__(x, y, w, h, tag, collidable)
         self.body = world.CreateDynamicBody(position=(x * w2b, y * w2b))
-        shape = b2PolygonShape(box=(w * w2b/2, h * w2b/2))
+        # shape = b2PolygonShape(box=(w * w2b/2, h * w2b/2))
+        # shape = b2CircleShape(radius= h * w2b/2)
+        # shape = Box2D.b2PolygonShape()
+        # shape.SetAsBox(w * w2b/2, h * w2b/2)
+
+        shape = Box2D.b2PolygonShape()
+        num_vertices = 8
+        vertices = [(w * w2b / 2 * math.cos(2 * math.pi * i / num_vertices),
+                     h * w2b / 2 * math.sin(2 * math.pi * i / num_vertices)) for i in range(num_vertices)]
+        shape.vertices = vertices
+
+
+
         self.fixDef = b2FixtureDef(shape=shape)
         self.fixDef.filter.categoryBits = 0x0002
         self.box = self.body.CreateFixture(self.fixDef)
         self.dirty = 2
         self.image = pg.Surface((w, h), pg.SRCALPHA, 32)
         self.image.convert_alpha()
-        self.image.fill((0, 0, 0, 0))
         self.rect = self.image.get_rect()
         self.body.mass = 1.0
         pg.draw.rect(self.image, (0, 101, 164), (self.rect.x, self.rect.y, w, h))
@@ -113,7 +131,8 @@ class Player(go.DUGameObject):
         self.direction = 1
         self.timeSinceShot = pg.time.get_ticks()
         self.weaponCoolDown = 0.3
-
+        self.image = sprites['Player']
+        self.health = 5
     def Update(self):
         currentTime = pg.time.get_ticks()
         self.rect.center = self.body.position.x * b2w, 771 - self.body.position.y * b2w
@@ -132,6 +151,8 @@ class Player(go.DUGameObject):
                 if event.key == pg.K_j and (currentTime - self.timeSinceShot) / 1000 > self.weaponCoolDown:
                     updater.add(Bullet(), projectileGroup)
                     self.timeSinceShot = pg.time.get_ticks()
+        if self.health < 0:
+            updater.remove(self, playerGroup)
         velocity = self.body.linearVelocity
         speed = velocity.length
         self.handleJump(velocity, speed)
@@ -161,12 +182,16 @@ class Player(go.DUGameObject):
             if event.key == pg.K_SPACE:
                 self.inputs['space'] = True
             if event.key == pg.K_j:
-                self.inputs['shoot'] = True
+              self.inputs['shoot'] = True
             if event.key == pg.K_a:
                 self.inputs['left'] = True
+                if self.direction != -1:
+                    self.image = pygame.transform.flip(self.image, True, False)
                 self.direction = -1
             elif event.key == pg.K_d:
                 self.inputs['right'] = True
+                if self.direction != 1:
+                    self.image = pygame.transform.flip(self.image, True, False)
                 self.direction = 1
         elif event.type == pg.KEYUP:
             if event.key == pg.K_SPACE:
@@ -186,7 +211,14 @@ class Enemy(go.DUGameObject):
     def __init__(self, x, y, w, h, tag = "", collidable = False):
         super().__init__(x, y, w, h, tag, collidable)
         self.body = world.CreateDynamicBody(position=(x * w2b, y * w2b))
-        shape = b2PolygonShape(box=(w * w2b/2, h * w2b/2))
+        # shape = b2PolygonShape(box=(w * w2b/2, h * w2b/2))
+
+        shape = Box2D.b2PolygonShape()
+        num_vertices = 8
+        vertices = [(w * w2b / 2 * math.cos(2 * math.pi * i / num_vertices),
+                     h * w2b / 2 * math.sin(2 * math.pi * i / num_vertices)) for i in range(num_vertices)]
+        shape.vertices = vertices
+
         self.fixDef = b2FixtureDef(shape=shape)
         self.fixDef.filter.maskBits = 0xFFFF
         self.fixDef.filter.categoryBits = 0x0001
@@ -199,13 +231,29 @@ class Enemy(go.DUGameObject):
         self.body.mass = 1.0
         pg.draw.rect(self.image, (101, 0, 164), (self.rect.x, self.rect.y, w, h))
         self.maxSpeed = 2
-        self.velocity = b2Vec2(1,0)
+        self.velocity = b2Vec2(0.11,0)
+        self.image = sprites['Enemy']
+        self.health = 5
+        self.playerDamageCooldown = False
     def Update(self):
         self.rect.center = self.body.position.x * b2w, 771 - self.body.position.y * b2w
         self.body.ApplyLinearImpulse(self.velocity, self.body.position, True)
-        collision = pg.sprite.spritecollide(self, groundGroup, False)
-        if not len(collision):
+        colliderCollision = pg.sprite.spritecollide(self, enemyColliderGroup, False)
+        playerCollision = pg.sprite.spritecollide(self, playerGroup, False)
+        if len(playerCollision) > 0 and self.playerDamageCooldown == False:
+            print("damage")
+            player.health -= 1
             self.velocity *= -1
+            self.playerDamageCooldown = True
+        else:
+            self.playerDamageCooldown = False
+        if len(colliderCollision) > 0:
+            print("collided")
+            self.velocity *= -1
+
+        if self.health < 0:
+            updater.remove(self, enemyGroup)
+
     def Draw(self):
         pass
 
@@ -239,11 +287,11 @@ class Tile(go.DGameObject):
     def Draw(self):
         pass
 
-def loadSprite(key, path, sprites):
+def loadSprite(key, path, w = 64, h = 64):
     t = Tile()
-    t.image = pg.Surface((64, 64), pg.SRCALPHA, 32)
-    sprite = pg.transform.scale(pg.image.load(path), (64, 64))
-    t.image.blit(sprite, (0, 0, 64, 64))
+    t.image = pg.Surface((w, h), pg.SRCALPHA, 32)
+    sprite = pg.transform.scale(pg.image.load(path), (w, h))
+    t.image.blit(sprite, (0, 0, w, h))
     sprites[key] = t.image
 
 def loadGame():
@@ -253,10 +301,11 @@ def loadGame():
     width = 100
     height = 20
     size = 2000
-    loadSprite("wall", "./assets/DungeonTileset/frames/wall_mid.png",sprites)
-    loadSprite("collider", "./assets/DungeonTileset/frames/crate.png",sprites)
+    loadSprite("wall", "./assets/DungeonTileset/frames/wall_mid.png")
+    loadSprite("collider", "./assets/DungeonTileset/frames/crate.png")
     i = 0
     j = 0
+    wallLength = 0
     for tile in range(2000):
         before = i
         if (not (i := tile % width)) and before != 0:
@@ -267,28 +316,37 @@ def loadGame():
                 x = i * 64
                 y = j * 64
                 if data == 69:
+                    wallLength += 1
+                    # if (i + 1) % width == 0 or layers['data'][(j * width) + i + 1] != 69:
+                    # t = StaticObject(x - (64 * (wallLength - 1)), y * -1, 64 * wallLength, 64, True)
                     t = StaticObject(x, y * -1, 64, 64, True)
-                    t.image = sprites['wall']
+
+                    # t.image = sprites['wall']
+                    # t.image = pg.transform.scale(sprites['wall'], (65 * wallLength, 64))
                     groundGroup.add(t)
+                    engine.spawn(t)
+                    wallLength = 0
+
                 elif data == 91:
-                    shape = b2PolygonShape(box=(64 * w2b / 2, 64 * w2b / 2))
-                    t = StaticObject(x, y * -1, 64, 64, False, 0x0005, 0x0001)
-                    t.fixDef = b2FixtureDef(shape=shape)
-                    # t.fixDef.filter.categoryBits = cb
-                    t.fixDef.filter.maskBits = 0x0001
-                    t.box = t.body.CreateFixture(t.fixDef)
+                    t = StaticObject(x, y * -1, 64, 64, False)
                     t.image = sprites['collider']
-                engine.spawn(t)
+                    enemyColliderGroup.add(t)
+                    engine.spawn(t)
+
 
 if __name__ == "__main__":
     sprites = {}
+    loadSprite("Enemy", "./assets/DungeonTileset/frames/big_demon_idle_anim_f0.png", 64, 125)
+    loadSprite("Player", "./assets/DungeonTileset/frames/knight_m_idle_anim_f0.png", 64, 125)
+    loadSprite("Bullet", "./assets/DungeonTileset/frames/weapon_arrow.png", 10, 25)
     scene = scn.Scene()
     groundGroup = pg.sprite.Group()
     playerGroup = pg.sprite.Group()
     enemyGroup = pg.sprite.Group()
+    enemyColliderGroup = pg.sprite.Group()
     projectileGroup = pg.sprite.Group()
-    player = Player(2000,-30,64,125)
-    enemy = Enemy(2000,-150,64,125)
+    player = Player(2800,-700,60,125)
+    enemy = Enemy(2000,-600,64,125)
     loadGame()
     playerGroup.add(player)
     enemyGroup.add(enemy)
@@ -298,6 +356,7 @@ if __name__ == "__main__":
     scene.all_sprites.append(playerGroup)
     scene.all_sprites.append(enemyGroup)
     scene.all_sprites.append(projectileGroup)
+    scene.all_sprites.append(enemyColliderGroup)
     camera = Camera()
     engine.spawn(camera)
     updater = Updater(0,0,0,0)
