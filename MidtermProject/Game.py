@@ -21,6 +21,11 @@ world = b2World(gravity, doSleep=False)
 timeStep = 1.0 / 60
 vel_iters, pos_iters = 6, 2
 
+pg.mixer.music.load("./assets/SoundEffects/metmhide.mid")
+shooting = pg.mixer.Sound("./assets/SoundEffects/507016__mrthenoronha__gun-shot-3-8-bit.wav")
+enemyHitSound = pg.mixer.Sound("./assets/SoundEffects/138480__justinvoke__bullet-blood-3.wav")
+wallHitSound = pg.mixer.Sound("./assets/SoundEffects/522401__filmmakersmanual__bullet-concrete-hit-4.wav")
+#pg.mixer.Sound.set_volume(1.0)
 
 class StaticObject(go.DGameObject):
     def __init__(self, x, y, w, h, collidable, cb = 0x0000, mb = 0xFFFF):
@@ -66,6 +71,10 @@ class Bullet(go.DUGameObject):
         if collided > 0:
             for object in enemyCollisions:
                 object.health -= 1
+            if enemyCollisions:
+                pg.mixer.Sound.play(enemyHitSound)
+            if groundCollisions:
+                pg.mixer.Sound.play(wallHitSound)
             updater.remove(self)
         self.body.ApplyLinearImpulse(self.velocity, self.body.position, True)
 
@@ -183,6 +192,7 @@ class Player(go.DUGameObject):
                 self.inputs['space'] = True
             if event.key == pg.K_j:
               self.inputs['shoot'] = True
+              pg.mixer.Sound.play(shooting)
             if event.key == pg.K_a:
                 self.inputs['left'] = True
                 if self.direction != -1:
@@ -303,6 +313,7 @@ def loadGame():
     size = 2000
     loadSprite("wall", "./assets/DungeonTileset/frames/wall_mid.png")
     loadSprite("collider", "./assets/DungeonTileset/frames/crate.png")
+    pg.mixer.music.play(-1)
     i = 0
     j = 0
     wallLength = 0
