@@ -73,7 +73,7 @@ class Engine:
             #     drawables.draw(self._screen)
             # draw all drawable objects
             for drawables in self.currentScene.drawable:
-                engine._screen.blit(drawables.image, (drawables.rect.x - engine.currentScene.camera.offset_x, drawables.rect.y - engine.currentScene.camera.offset_y))
+                engine._screen.blit(drawables.image, (drawables.rect.x - engine.currentScene.camera.offset_x, drawables.rect.y - 1000))
             pygame.display.flip()
             #limits frame rate to the FRAME_RATE constant
             clock.tick(self.FRAME_RATE)
