@@ -18,6 +18,11 @@ world = b2World(gravity, doSleep=False)
 timeStep = 1.0 / 60
 vel_iters, pos_iters = 6, 2
 
+pg.mixer.music.load("./assets/SoundEffects/metmhide.mid")
+shooting = pg.mixer.Sound("./assets/SoundEffects/507016__mrthenoronha__gun-shot-3-8-bit.wav")
+enemyHitSound = pg.mixer.Sound("./assets/SoundEffects/138480__justinvoke__bullet-blood-3.wav")
+wallHitSound = pg.mixer.Sound("./assets/SoundEffects/522401__filmmakersmanual__bullet-concrete-hit-4.wav")
+pg.mixer.Sound.set_volume(1.0)
 
 class StaticObject(go.DGameObject):
     def __init__(self, x, y, w, h, collidable, cb = 0x0000, mb = 0xFFFF):
@@ -60,6 +65,10 @@ class Bullet(go.DUGameObject):
         collided = len(enemyCollisions) + len(groundCollisions)
         if collided > 0:
             updater.remove(self)
+            if enemyCollisions:
+                pg.mixer.Sound.play(enemyHitSound)
+            if groundCollisions:
+                pg.mixer.Sound.play(wallHitSound)
         self.body.ApplyLinearImpulse(self.velocity, self.body.position, True)
 
     def Draw(self):
@@ -162,6 +171,7 @@ class Player(go.DUGameObject):
                 self.inputs['space'] = True
             if event.key == pg.K_j:
                 self.inputs['shoot'] = True
+                pg.mixer.Sound.play(shooting)
             if event.key == pg.K_a:
                 self.inputs['left'] = True
                 self.direction = -1
@@ -175,6 +185,7 @@ class Player(go.DUGameObject):
                 self.jumpDuration = 0
             if event.key == pg.K_j:
                 self.inputs['shoot'] = False
+
             if event.key == pg.K_a:
                 self.inputs['left'] = False
                 self.body.linearVelocity.x = 0
@@ -197,9 +208,15 @@ class Enemy(go.DUGameObject):
         self.image.fill((0, 0, 0, 0))
         self.rect = self.image.get_rect()
         self.body.mass = 1.0
-        pg.draw.rect(self.image, (101, 0, 164), (self.rect.x, self.rect.y, w, h))
+        pg.draw.rect(self.image, (101, 230, 164), (self.rect.x, self.rect.y, w, h))
         self.maxSpeed = 2
         self.velocity = b2Vec2(1,0)
+        # loadSprite("enemy", "./assets/DungeonTileset/frames/big_demon_idle_anim_f1.png",sprites)
+        # loadSprite("enemy-walk", "/assets/DungeonTileset/frames/big_demon_run_anim_f1.png", sprites)
+        # loadSprite("player", "/assets/DungeonTileset/frames/elf_m_idle_anim_f3.png", sprites)
+        # loadSprite("player-walk-odd", "/assets/DungeonTileset/frames/elf_m_run_anim_f1.png", sprites)
+        # loadSprite("player-walk-even", "/assets/DungeonTileset/frames/elf_m_run_anim_f2.png", sprites)
+        # loadSprite("player-jump", "/assets/DungeonTileset/frames/elf_m_run_anim_f3.png", sprites)
     def Update(self):
         self.rect.center = self.body.position.x * b2w, 771 - self.body.position.y * b2w
         self.body.ApplyLinearImpulse(self.velocity, self.body.position, True)
@@ -255,6 +272,7 @@ def loadGame():
     size = 2000
     loadSprite("wall", "./assets/DungeonTileset/frames/wall_mid.png",sprites)
     loadSprite("collider", "./assets/DungeonTileset/frames/crate.png",sprites)
+    pg.mixer.music.play(-1)
     i = 0
     j = 0
     for tile in range(2000):
