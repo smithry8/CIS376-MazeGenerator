@@ -34,14 +34,13 @@ class StaticObject(go.DGameObject):
         self.body = world.CreateStaticBody(position=(x * w2b, y * w2b), shapes = shape)
         self.fixDef = b2FixtureDef(shape=shape)
         self.fixDef.shape._radius = 0.1
-        print(cb)
+        if cb != 5:
+            print(mb)
         self.fixDef.filter.categoryBits = cb
-        print(self.fixDef.filter.maskBits)
-        self.fixDef.filter.maskBits = 0x0001
-        print(self.fixDef.filter.maskBits)
+        self.fixDef.filter.maskBits = mb
         self.box = self.body.CreateFixture(self.fixDef)
         self.image = pg.Surface((w, h), pg.SRCALPHA, 32)
-        self.image.fill((0,255,0))
+        self.image.fill((0,0,0,0))
         self.rect = self.image.get_rect()
         self.rect.center = self.body.position.x * b2w, 768 - self.body.position.y * b2w
 
@@ -116,6 +115,7 @@ class Player(go.DUGameObject):
 
         self.fixDef = b2FixtureDef(shape=shape)
         self.fixDef.filter.categoryBits = 0x0002
+        # self.fixDef.filter.maskBits = 0xFFFF ^ 0x0005
         self.box = self.body.CreateFixture(self.fixDef)
         self.dirty = 2
         self.image = pg.Surface((w, h), pg.SRCALPHA, 32)
@@ -141,7 +141,7 @@ class Player(go.DUGameObject):
         self.health = 5
     def Update(self):
         currentTime = pg.time.get_ticks()
-        self.rect.center = self.body.position.x * b2w, 771 - self.body.position.y * b2w
+        self.rect.center = self.body.position.x * b2w + 10, 771 - self.body.position.y * b2w
         collided = pg.sprite.spritecollide(self, groundGroup, False)
         self.timeSinceShot += 1
         if(len(collided) > 0):
@@ -335,7 +335,7 @@ def loadGame():
                     engine.spawn(t)
                 elif data == 91:
                     t = StaticObject(x, y * -1, 64, 64, False, cb = 0x0005, mb = 0x0001)
-                    t.image = sprites['collider']
+                    # t.image = sprites['collider']
                     enemyColliderGroup.add(t)
                     engine.spawn(t)
                 elif data == 487:
@@ -359,13 +359,16 @@ if __name__ == "__main__":
     doorGroup = pg.sprite.Group()
     enemyColliderGroup = pg.sprite.Group()
     projectileGroup = pg.sprite.Group()
-    player = Player(2800,-700,60,125)
+    player = Player(1500,-700,60,125)
     enemy = Enemy(2000,-600,64,125)
+    enemy1 = Enemy(1000,-600,64,125)
     loadGame()
     playerGroup.add(player)
     enemyGroup.add(enemy)
+    enemyGroup.add(enemy1)
     engine.spawn(player)
     engine.spawn(enemy)
+    engine.spawn(enemy1)
     scene.all_sprites.append(groundGroup)
     scene.all_sprites.append(playerGroup)
     scene.all_sprites.append(enemyGroup)
